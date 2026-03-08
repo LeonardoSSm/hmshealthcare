@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS patients (
+  id VARCHAR(36) PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  cpf VARCHAR(11) NOT NULL UNIQUE,
+  birth_date DATE NOT NULL,
+  blood_type VARCHAR(10) NOT NULL,
+  allergies TEXT NULL,
+  phone VARCHAR(30) NULL,
+  email VARCHAR(120) NULL,
+  address VARCHAR(255) NULL,
+  status VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_patients_name ON patients(name);
