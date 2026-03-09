@@ -39,6 +39,9 @@ public class MedicalRecordEntity {
     @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<PrescriptionEntity> prescriptions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<MedicalRecordEventEntity> events = new ArrayList<>();
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getPatientId() { return patientId; }
@@ -53,4 +56,6 @@ public class MedicalRecordEntity {
     public void setDiagnoses(List<DiagnosisEntity> diagnoses) { this.diagnoses = diagnoses; }
     public List<PrescriptionEntity> getPrescriptions() { return prescriptions; }
     public void setPrescriptions(List<PrescriptionEntity> prescriptions) { this.prescriptions = prescriptions; }
+    public List<MedicalRecordEventEntity> getEvents() { return events; }
+    public void setEvents(List<MedicalRecordEventEntity> events) { this.events = events; }
 }

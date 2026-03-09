@@ -11,4 +11,5 @@ public interface AdmissionRepository {
     Optional<Admission> findById(UUID id);
     List<Admission> findByPatientId(PatientId patientId);
     List<Admission> findActiveAdmissions();
+    List<Admission> findAll();
 }

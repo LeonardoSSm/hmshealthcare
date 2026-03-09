@@ -1,8 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 import { login as loginRequest, logout as logoutRequest } from "../services/auth.service";
 
 export function useAuth() {
+  const queryClient = useQueryClient();
   const setSession = useAuthStore((s) => s.setSession);
   const clearSession = useAuthStore((s) => s.clearSession);
   const session = useAuthStore((s) => s.session);
@@ -18,7 +20,10 @@ export function useAuth() {
         await logoutRequest(session.refreshToken);
       }
     },
-    onSettled: () => clearSession()
+    onSettled: () => {
+      clearSession();
+      queryClient.clear();
+    }
   });
 
   return { session, login, logout };

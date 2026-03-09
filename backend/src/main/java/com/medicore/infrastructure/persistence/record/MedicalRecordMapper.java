@@ -2,7 +2,9 @@ package com.medicore.infrastructure.persistence.record;
 
 import com.medicore.domain.patient.PatientId;
 import com.medicore.domain.record.Diagnosis;
+import com.medicore.domain.record.ClinicalEventType;
 import com.medicore.domain.record.MedicalRecord;
+import com.medicore.domain.record.MedicalRecordEvent;
 import com.medicore.domain.record.Prescription;
 import com.medicore.domain.shared.DateRange;
 
@@ -44,8 +46,20 @@ public final class MedicalRecordMapper {
             return pe;
         }).toList();
 
+        List<MedicalRecordEventEntity> events = record.getEvents().stream().map(event -> {
+            MedicalRecordEventEntity ee = new MedicalRecordEventEntity();
+            ee.setMedicalRecord(entity);
+            ee.setType(event.type().name());
+            ee.setAuthor(event.author());
+            ee.setDescription(event.description());
+            ee.setNotes(event.notes());
+            ee.setOccurredAt(event.occurredAt());
+            return ee;
+        }).toList();
+
         entity.setDiagnoses(diagnoses);
         entity.setPrescriptions(prescriptions);
+        entity.setEvents(events);
         return entity;
     }
 
@@ -62,6 +76,14 @@ public final class MedicalRecordMapper {
             new DateRange(p.getStartDate(), p.getEndDate())
         )).toList();
 
+        List<MedicalRecordEvent> events = entity.getEvents().stream().map(event -> new MedicalRecordEvent(
+            ClinicalEventType.valueOf(event.getType()),
+            event.getAuthor(),
+            event.getDescription(),
+            event.getNotes(),
+            event.getOccurredAt()
+        )).toList();
+
         return MedicalRecord.rehydrate(
             UUID.fromString(entity.getId()),
             new PatientId(UUID.fromString(entity.getPatientId())),
@@ -69,7 +91,8 @@ public final class MedicalRecordMapper {
             entity.getUpdatedAt(),
             entity.getObservations(),
             diagnoses,
-            prescriptions
+            prescriptions,
+            events
         );
     }
 }

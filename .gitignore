@@ -5,3 +5,7 @@ frontend/dist/
 frontend/tsconfig.tsbuildinfo
 .tools/
 .vscode/
+backend/*.log
+backend/*.out.log
+backend/*.err.log
+.env

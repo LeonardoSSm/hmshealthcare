@@ -10,7 +10,8 @@ public record MedicalRecordResponse(
     UUID id,
     UUID patientId,
     String observations,
-    List<DiagnosisRequest> diagnoses
+    List<DiagnosisRequest> diagnoses,
+    List<MedicalRecordEventResponse> events
 ) {
     public static MedicalRecordResponse from(MedicalRecord medicalRecord) {
         return new MedicalRecordResponse(
@@ -19,6 +20,9 @@ public record MedicalRecordResponse(
             medicalRecord.getObservations(),
             medicalRecord.getDiagnoses().stream()
                 .map(d -> new DiagnosisRequest(d.doctorId(), d.icd10Code(), d.description(), d.notes(), d.diagnosedAt()))
+                .toList(),
+            medicalRecord.getEvents().stream()
+                .map(MedicalRecordEventResponse::from)
                 .toList()
         );
     }

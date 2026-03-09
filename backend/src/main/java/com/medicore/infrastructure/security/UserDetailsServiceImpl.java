@@ -28,10 +28,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("User inactive");
         }
 
+        String rawRole = user.getRole() == null ? "" : user.getRole().trim().toUpperCase();
+        String authority = rawRole.startsWith("ROLE_") ? rawRole : "ROLE_" + rawRole;
+
         return new User(
             user.getEmail(),
             user.getPasswordHash(),
-            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+            List.of(new SimpleGrantedAuthority(authority))
         );
     }
 }

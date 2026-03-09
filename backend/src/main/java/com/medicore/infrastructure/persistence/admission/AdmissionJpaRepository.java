@@ -7,4 +7,5 @@ import java.util.List;
 public interface AdmissionJpaRepository extends JpaRepository<AdmissionEntity, String> {
     List<AdmissionEntity> findByPatientId(String patientId);
     List<AdmissionEntity> findByStatus(String status);
+    List<AdmissionEntity> findAllByOrderByAdmissionDateDesc();
 }

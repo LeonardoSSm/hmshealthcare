@@ -3,7 +3,6 @@ package com.medicore.application.record;
 import com.medicore.domain.patient.PatientId;
 import com.medicore.domain.record.MedicalRecord;
 import com.medicore.domain.record.MedicalRecordRepository;
-import com.medicore.domain.shared.DomainException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -17,8 +16,9 @@ public class GetMedicalRecordByPatientUseCase {
     }
 
     public MedicalRecordResponse execute(UUID patientId) {
-        MedicalRecord medicalRecord = medicalRecordRepository.findByPatientId(new PatientId(patientId))
-            .orElseThrow(() -> new DomainException("Medical record not found"));
+        PatientId targetPatientId = new PatientId(patientId);
+        MedicalRecord medicalRecord = medicalRecordRepository.findByPatientId(targetPatientId)
+            .orElseGet(() -> medicalRecordRepository.save(MedicalRecord.createFor(targetPatientId)));
         return MedicalRecordResponse.from(medicalRecord);
     }
 }

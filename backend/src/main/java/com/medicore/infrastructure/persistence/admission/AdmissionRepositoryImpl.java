@@ -38,4 +38,9 @@ public class AdmissionRepositoryImpl implements AdmissionRepository {
     public List<Admission> findActiveAdmissions() {
         return admissionJpaRepository.findByStatus(AdmissionStatus.ACTIVE.name()).stream().map(AdmissionMapper::toDomain).toList();
     }
+
+    @Override
+    public List<Admission> findAll() {
+        return admissionJpaRepository.findAllByOrderByAdmissionDateDesc().stream().map(AdmissionMapper::toDomain).toList();
+    }
 }

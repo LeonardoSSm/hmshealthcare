@@ -4,6 +4,7 @@ import { listPatients } from "../services/patient.service";
 export function usePatients(query: string) {
   return useQuery({
     queryKey: ["patients", query],
-    queryFn: () => listPatients(query)
+    queryFn: () => listPatients(query),
+    staleTime: 20_000
   });
 }

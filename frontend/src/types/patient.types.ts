@@ -11,3 +11,14 @@ export interface Patient {
   status: "ACTIVE" | "INACTIVE";
   createdAt: string;
 }
+
+export interface CreatePatientPayload {
+  name: string;
+  cpf: string;
+  birthDate: string;
+  bloodType: string;
+  allergies: string;
+  phone: string;
+  email: string;
+  address: string;
+}

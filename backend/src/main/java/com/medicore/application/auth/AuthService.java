@@ -49,13 +49,14 @@ public class AuthService {
         UserEntity entity = userJpaRepository.findByEmail(command.email())
             .orElseThrow(() -> new DomainException("Invalid credentials"));
 
+        String normalizedRole = normalizeRole(entity.getRole());
         User principal = toPrincipal(entity);
-        String accessToken = jwtService.generateAccessToken(principal, Map.of("role", entity.getRole(), "name", entity.getName()));
+        String accessToken = jwtService.generateAccessToken(principal, Map.of("role", normalizedRole, "name", entity.getName()));
         String refreshToken = jwtService.generateRefreshToken(principal);
 
         saveRefreshToken(entity.getId(), refreshToken);
 
-        return new AuthResponse(accessToken, refreshToken, entity.getRole(), entity.getName(), entity.getEmail());
+        return new AuthResponse(accessToken, refreshToken, normalizedRole, entity.getName(), entity.getEmail());
     }
 
     @Transactional
@@ -76,12 +77,13 @@ public class AuthService {
         stored.setRevoked(true);
         refreshTokenJpaRepository.save(stored);
 
+        String normalizedRole = normalizeRole(user.getRole());
         User principal = toPrincipal(user);
-        String newAccess = jwtService.generateAccessToken(principal, Map.of("role", user.getRole(), "name", user.getName()));
+        String newAccess = jwtService.generateAccessToken(principal, Map.of("role", normalizedRole, "name", user.getName()));
         String newRefresh = jwtService.generateRefreshToken(principal);
         saveRefreshToken(user.getId(), newRefresh);
 
-        return new AuthResponse(newAccess, newRefresh, user.getRole(), user.getName(), user.getEmail());
+        return new AuthResponse(newAccess, newRefresh, normalizedRole, user.getName(), user.getEmail());
     }
 
     @Transactional
@@ -114,10 +116,16 @@ public class AuthService {
     }
 
     private static User toPrincipal(UserEntity user) {
+        String authority = "ROLE_" + normalizeRole(user.getRole());
         return new User(
             user.getEmail(),
             user.getPasswordHash(),
-            List.of(() -> "ROLE_" + user.getRole())
+            List.of(() -> authority)
         );
+    }
+
+    private static String normalizeRole(String rawRole) {
+        String normalized = rawRole == null ? "" : rawRole.trim().toUpperCase();
+        return normalized.startsWith("ROLE_") ? normalized.substring(5) : normalized;
     }
 }
