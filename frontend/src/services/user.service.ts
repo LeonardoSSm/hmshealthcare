@@ -50,3 +50,7 @@ export async function updateUser(id: string, payload: UpdateUserRemotePayload): 
   const response = await api.put<UserRemoteResponse>(`/users/${id}`, payload);
   return response.data;
 }
+
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`);
+}

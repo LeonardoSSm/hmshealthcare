@@ -16,12 +16,23 @@ export interface MedicalRecordEvent {
   occurredAt: string;
 }
 
+export interface Prescription {
+  id: string;
+  doctorId: string;
+  medication: string;
+  dosage: string;
+  frequency: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface MedicalRecord {
   id: string;
   patientId: string;
   observations: string;
   diagnoses: DiagnosisEntry[];
   events: MedicalRecordEvent[];
+  prescriptions: Prescription[];
 }
 
 export interface CreateDiagnosisPayload {
@@ -38,4 +49,13 @@ export interface CreateMedicalRecordEventPayload {
   description: string;
   notes: string;
   occurredAt: string;
+}
+
+export interface CreatePrescriptionPayload {
+  doctorId: string;
+  medication: string;
+  dosage: string;
+  frequency: string;
+  startDate: string;
+  endDate: string;
 }

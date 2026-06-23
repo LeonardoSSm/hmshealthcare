@@ -6,7 +6,8 @@ import { Modal } from "../../components/ui/Modal";
 import { Icon } from "../../components/ui/Icon";
 import type { IconName } from "../../components/ui/Icon";
 import { usePatients } from "../../hooks/usePatients";
-import { useAddMedicalRecordEvent, useMedicalRecord } from "../../hooks/useMedicalRecord";
+import { useAddMedicalRecordEvent, useAddPrescription, useMedicalRecord } from "../../hooks/useMedicalRecord";
+import type { CreatePrescriptionPayload } from "../../types/record.types";
 import { getPatientById } from "../../services/patient.service";
 import { useAuthStore } from "../../store/authStore";
 import { useToast } from "../../contexts/ToastContext";
@@ -169,6 +170,96 @@ function AddEventModal({ onClose, onSave, pending }: AddEventModalProps) {
   );
 }
 
+interface AddPrescriptionModalProps {
+  doctorId: string;
+  onClose: () => void;
+  onSave: (payload: CreatePrescriptionPayload) => void;
+  pending: boolean;
+}
+
+function AddPrescriptionModal({ doctorId, onClose, onSave, pending }: AddPrescriptionModalProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({
+    medication: "",
+    dosage: "",
+    frequency: "",
+    startDate: today,
+    endDate: today
+  });
+
+  const setField = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  return (
+    <Modal
+      title="Nova Prescrição"
+      subtitle="Adicionar prescrição ao prontuário"
+      onClose={onClose}
+      footer={
+        <>
+          <button
+            type="submit"
+            form="add-prescription-form"
+            className="btn-small"
+            disabled={pending || !form.medication.trim()}
+          >
+            {pending ? "Salvando..." : "Salvar Prescrição"}
+          </button>
+          <button type="button" className="btn-outline" onClick={onClose}>
+            Cancelar
+          </button>
+        </>
+      }
+    >
+      <form
+        id="add-prescription-form"
+        className="form-grid"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSave({ ...form, doctorId });
+        }}
+      >
+        <label className="full-width">
+          Medicamento
+          <input
+            value={form.medication}
+            onChange={(event) => setField("medication", event.target.value)}
+            placeholder="Ex: Amoxicilina 500mg"
+            required
+          />
+        </label>
+        <label>
+          Dosagem
+          <input
+            value={form.dosage}
+            onChange={(event) => setField("dosage", event.target.value)}
+            placeholder="Ex: 1 comprimido"
+            required
+          />
+        </label>
+        <label>
+          Frequência
+          <input
+            value={form.frequency}
+            onChange={(event) => setField("frequency", event.target.value)}
+            placeholder="Ex: 8 em 8 horas"
+            required
+          />
+        </label>
+        <label>
+          Data inicio
+          <input type="date" value={form.startDate} onChange={(event) => setField("startDate", event.target.value)} required />
+        </label>
+        <label>
+          Data fim
+          <input type="date" value={form.endDate} onChange={(event) => setField("endDate", event.target.value)} required />
+        </label>
+      </form>
+    </Modal>
+  );
+}
+
 export default function MedicalRecordsPage() {
   const [params, setParams] = useSearchParams();
   const { notify } = useToast();
@@ -179,8 +270,10 @@ export default function MedicalRecordsPage() {
     session?.role === "NURSE" ||
     session?.role === "RECEPTIONIST";
   const canAddDiagnosis = session?.role === "ADMIN" || session?.role === "DOCTOR";
+  const canAddPrescription = session?.role === "ADMIN" || session?.role === "DOCTOR";
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
 
   const selectedPatientId = params.get("patientId");
   const { data: patients = [], isLoading: loadingPatients } = usePatients(search);
@@ -194,6 +287,7 @@ export default function MedicalRecordsPage() {
   const selectedPatient = selectedPatientQuery.data ?? null;
   const recordQuery = useMedicalRecord(selectedPatientId);
   const addMedicalRecordEvent = useAddMedicalRecordEvent(selectedPatientId, recordQuery.data?.id ?? null);
+  const addPrescription = useAddPrescription(selectedPatientId, recordQuery.data?.id ?? null);
 
   const timeline = useMemo(() => {
     const diagnosisEvents: ClinicalEvent[] =
@@ -356,6 +450,25 @@ export default function MedicalRecordsPage() {
         />
       ) : null}
 
+      {showPrescriptionModal ? (
+        <AddPrescriptionModal
+          doctorId={session?.userId ?? ""}
+          onClose={() => setShowPrescriptionModal(false)}
+          pending={addPrescription.isPending}
+          onSave={(payload) => {
+            addPrescription.mutate(payload, {
+              onSuccess: () => {
+                setShowPrescriptionModal(false);
+                notify("Prescrição adicionada com sucesso.");
+              },
+              onError: () => {
+                notify("Falha ao adicionar prescrição.", "danger");
+              }
+            });
+          }}
+        />
+      ) : null}
+
       {selectedPatientQuery.isLoading ? <p>Carregando paciente...</p> : null}
       {recordQuery.isLoading ? <p>Carregando prontuário...</p> : null}
       {recordQuery.isError ? <p className="error-text">Não foi possível carregar prontuário.</p> : null}
@@ -426,6 +539,39 @@ export default function MedicalRecordsPage() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              </article>
+
+              <article className="records-card">
+                <header className="records-card-header">
+                  <h3>Prescrições</h3>
+                  {canAddPrescription ? (
+                    <button
+                      type="button"
+                      className="btn-outline"
+                      style={{ fontSize: "12px", padding: "4px 10px" }}
+                      onClick={() => setShowPrescriptionModal(true)}
+                    >
+                      + Adicionar
+                    </button>
+                  ) : null}
+                </header>
+                <div className="records-card-body">
+                  {(recordQuery.data?.prescriptions ?? []).length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Nenhuma prescrição registrada.</p>
+                  ) : (
+                    <ul className="prescription-list">
+                      {(recordQuery.data?.prescriptions ?? []).map((rx) => (
+                        <li key={rx.id} className="prescription-item">
+                          <strong>{rx.medication}</strong>
+                          <span>{rx.dosage} — {rx.frequency}</span>
+                          <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
+                            {rx.startDate} a {rx.endDate}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </article>
             </aside>

@@ -4,6 +4,7 @@ import { usePatients } from "../../hooks/usePatients";
 import { useAdmissions } from "../../hooks/useAdmissions";
 import { useBeds } from "../../hooks/useBeds";
 import { useDoctors } from "../../hooks/useUsers";
+import { useAttendancesQueue } from "../../hooks/useAttendancesQueue";
 import { StatCard } from "../../components/ui/StatCard";
 import { PageCard } from "../../components/ui/PageCard";
 import { StatusBadge } from "../../components/ui/StatusBadge";
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const { data: admissions = [] } = useAdmissions();
   const { data: beds = [] } = useBeds();
   const { data: doctors = [] } = useDoctors();
+  const { data: queue = [] } = useAttendancesQueue(false);
 
   const patientNameById = useMemo(() => new Map(patients.map((patient) => [patient.id, patient.name])), [patients]);
   const doctorNameById = useMemo(() => new Map(doctors.map((doctor) => [doctor.id, doctor.name])), [doctors]);
@@ -38,13 +40,22 @@ export default function DashboardPage() {
   const maintenanceBeds = beds.filter((bed) => bed.status === "MAINTENANCE").length;
   const occupancyRate = beds.length === 0 ? 0 : Math.round((occupiedBeds / beds.length) * 100);
 
+  const queueWaiting = queue.filter(
+    (a) => a.status === "WAITING_TRIAGE" || a.status === "WAITING_DOCTOR"
+  ).length;
+  const queueInProgress = queue.filter(
+    (a) => a.status === "IN_TRIAGE" || a.status === "CALLED_DOCTOR" || a.status === "IN_CONSULTATION"
+  ).length;
+  const queueTotal = queue.length;
+  const queueHighRisk = queue.filter((a) => a.riskLevel === "RED" || a.riskLevel === "ORANGE").length;
+
   return (
     <div className="stack">
       <section className="stats-grid">
         <StatCard
           title="Pacientes Ativos"
           value={loadingPatients ? "..." : patients.filter((patient) => patient.status === "ACTIVE").length}
-          trend="+ 3 esta semana"
+          trend={`${patients.filter((p) => p.status === "ACTIVE").length} cadastrados`}
           trendTone="up"
           tone="blue"
           icon={<Icon name="team" />}
@@ -52,7 +63,7 @@ export default function DashboardPage() {
         <StatCard
           title="Internados Agora"
           value={activeAdmissions.length}
-          trend="+ 1 hoje"
+          trend={`${admissions.filter((a) => a.status === "DISCHARGED").length} altas total`}
           trendTone="up"
           tone="amber"
           icon={<Icon name="hospital" />}
@@ -60,18 +71,18 @@ export default function DashboardPage() {
         <StatCard
           title="Leitos Disponiveis"
           value={availableBeds}
-          trend="- 2 vs ontem"
-          trendTone="down"
+          trend={`${occupancyRate}% de ocupacao`}
+          trendTone={occupancyRate > 80 ? "down" : "up"}
           tone="green"
           icon={<Icon name="bed" />}
         />
         <StatCard
-          title="Altas Hoje"
-          value={admissions.filter((admission) => admission.status === "DISCHARGED").length}
-          trend="+ 1 vs ontem"
-          trendTone="up"
+          title="Na Fila Agora"
+          value={queueTotal}
+          trend={`${queueHighRisk} alta prioridade`}
+          trendTone={queueHighRisk > 0 ? "down" : "up"}
           tone="teal"
-          icon={<Icon name="file" />}
+          icon={<Icon name="queue" />}
         />
       </section>
 
@@ -148,6 +159,34 @@ export default function DashboardPage() {
               <article>
                 <strong>{maintenanceBeds}</strong>
                 <p>Manutencao</p>
+              </article>
+            </div>
+          </PageCard>
+
+          <PageCard
+            title="Fila de Atendimento"
+            actions={
+              <button type="button" className="btn-outline" onClick={() => navigate("/queue")}>
+                Ver fila
+              </button>
+            }
+          >
+            <div className="occupancy-grid">
+              <article>
+                <strong>{queueTotal}</strong>
+                <p>Total na fila</p>
+              </article>
+              <article>
+                <strong>{queueWaiting}</strong>
+                <p>Aguardando</p>
+              </article>
+              <article>
+                <strong>{queueInProgress}</strong>
+                <p>Em atendimento</p>
+              </article>
+              <article style={{ color: queueHighRisk > 0 ? "#dc2626" : undefined }}>
+                <strong>{queueHighRisk}</strong>
+                <p>Alta prioridade</p>
               </article>
             </div>
           </PageCard>

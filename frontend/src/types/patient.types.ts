@@ -22,3 +22,13 @@ export interface CreatePatientPayload {
   email: string;
   address: string;
 }
+
+export interface UpdatePatientPayload {
+  name: string;
+  birthDate: string;
+  bloodType: string;
+  allergies: string;
+  phone: string;
+  email: string;
+  address: string;
+}

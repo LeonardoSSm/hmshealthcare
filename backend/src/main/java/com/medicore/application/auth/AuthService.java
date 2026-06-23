@@ -56,7 +56,7 @@ public class AuthService {
 
         saveRefreshToken(entity.getId(), refreshToken);
 
-        return new AuthResponse(accessToken, refreshToken, normalizedRole, entity.getName(), entity.getEmail());
+        return new AuthResponse(accessToken, refreshToken, normalizedRole, entity.getName(), entity.getEmail(), entity.getId());
     }
 
     @Transactional
@@ -83,7 +83,7 @@ public class AuthService {
         String newRefresh = jwtService.generateRefreshToken(principal);
         saveRefreshToken(user.getId(), newRefresh);
 
-        return new AuthResponse(newAccess, newRefresh, normalizedRole, user.getName(), user.getEmail());
+        return new AuthResponse(newAccess, newRefresh, normalizedRole, user.getName(), user.getEmail(), user.getId());
     }
 
     @Transactional

@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addDiagnosis,
   addMedicalRecordEvent,
+  addPrescription,
   getMedicalRecordByPatient
 } from "../services/medicalRecord.service";
-import type { CreateDiagnosisPayload, CreateMedicalRecordEventPayload } from "../types/record.types";
+import type { CreateDiagnosisPayload, CreateMedicalRecordEventPayload, CreatePrescriptionPayload } from "../types/record.types";
 
 export function useMedicalRecord(patientId: string | null) {
   return useQuery({
@@ -31,6 +32,17 @@ export function useAddMedicalRecordEvent(patientId: string | null, medicalRecord
   return useMutation({
     mutationFn: (payload: CreateMedicalRecordEventPayload) =>
       addMedicalRecordEvent(medicalRecordId as string, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["medical-record", patientId] });
+    }
+  });
+}
+
+export function useAddPrescription(patientId: string | null, medicalRecordId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreatePrescriptionPayload) => addPrescription(medicalRecordId as string, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medical-record", patientId] });
     }

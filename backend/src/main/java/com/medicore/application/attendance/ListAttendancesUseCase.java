@@ -6,6 +6,7 @@ import com.medicore.domain.shared.PagedResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -32,6 +33,18 @@ public class ListAttendancesUseCase {
     @Transactional(readOnly = true)
     public PagedResult<AttendanceResponse> executePaged(int page, int size) {
         PagedResult<Attendance> result = attendanceRepository.findAllPaged(page, size);
+        return new PagedResult<>(
+            result.content().stream().map(responseMapper::toResponse).toList(),
+            result.page(),
+            result.size(),
+            result.totalElements(),
+            result.totalPages()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResult<AttendanceResponse> executeByDateRange(LocalDate from, LocalDate to, int page, int size) {
+        PagedResult<Attendance> result = attendanceRepository.findByDateRange(from, to, page, size);
         return new PagedResult<>(
             result.content().stream().map(responseMapper::toResponse).toList(),
             result.page(),

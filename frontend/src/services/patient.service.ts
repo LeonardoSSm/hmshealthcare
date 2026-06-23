@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { CreatePatientPayload, Patient } from "../types/patient.types";
+import type { CreatePatientPayload, Patient, UpdatePatientPayload } from "../types/patient.types";
 import type { PagedResult } from "../types/paged.types";
 
 const uiToApiBloodType: Record<string, string> = {
@@ -49,6 +49,18 @@ export async function createPatient(payload: CreatePatientPayload): Promise<Pati
   return toUiPatient(response.data);
 }
 
+export async function updatePatient(id: string, payload: UpdatePatientPayload): Promise<Patient> {
+  const response = await api.put<Patient>(`/patients/${id}`, {
+    ...payload,
+    bloodType: uiToApiBloodType[payload.bloodType] ?? payload.bloodType
+  });
+  return toUiPatient(response.data);
+}
+
 export async function deactivatePatient(id: string): Promise<void> {
   await api.delete(`/patients/${id}`);
+}
+
+export async function reactivatePatient(id: string): Promise<void> {
+  await api.patch(`/patients/${id}/activate`);
 }

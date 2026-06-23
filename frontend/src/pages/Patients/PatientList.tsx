@@ -2,9 +2,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
-import type { Patient } from "../../types/patient.types";
-import type { CreatePatientPayload } from "../../types/patient.types";
-import { createPatient } from "../../services/patient.service";
+import type { Patient, CreatePatientPayload, UpdatePatientPayload } from "../../types/patient.types";
+import { createPatient, updatePatient, deactivatePatient, reactivatePatient } from "../../services/patient.service";
 import { usePatients } from "../../hooks/usePatients";
 import { useToast } from "../../contexts/ToastContext";
 import { PageCard } from "../../components/ui/PageCard";
@@ -206,6 +205,113 @@ function NewPatientModal({ onClose, onSubmit, submitting }: NewPatientModalProps
   );
 }
 
+interface EditPatientModalProps {
+  patient: Patient;
+  onClose: () => void;
+  onSubmit: (payload: UpdatePatientPayload) => void;
+  submitting: boolean;
+}
+
+function EditPatientModal({ patient, onClose, onSubmit, submitting }: EditPatientModalProps) {
+  const [form, setForm] = useState<UpdatePatientPayload>({
+    name: patient.name,
+    birthDate: patient.birthDate,
+    bloodType: patient.bloodType,
+    allergies: patient.allergies,
+    phone: patient.phone,
+    email: patient.email,
+    address: patient.address
+  });
+
+  const setField = <K extends keyof UpdatePatientPayload>(field: K, value: UpdatePatientPayload[K]) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  return (
+    <Modal
+      title="Editar paciente"
+      subtitle={`${patient.cpf} — somente dados cadastrais`}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="submit" form="edit-patient-form" className="btn-small" disabled={submitting}>
+            {submitting ? "Salvando..." : "Salvar"}
+          </button>
+          <button type="button" className="btn-outline" onClick={onClose}>
+            Cancelar
+          </button>
+        </>
+      }
+    >
+      <form
+        id="edit-patient-form"
+        className="form-grid"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const phoneDigits = onlyDigits(form.phone);
+          if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+            return;
+          }
+          onSubmit(form);
+        }}
+      >
+        <label>
+          Nome completo
+          <input value={form.name} onChange={(event) => setField("name", event.target.value)} required />
+        </label>
+        <label>
+          Data de nascimento
+          <input
+            type="date"
+            value={form.birthDate}
+            onChange={(event) => setField("birthDate", event.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Tipo sanguineo
+          <select value={form.bloodType} onChange={(event) => setField("bloodType", event.target.value)} required>
+            {bloodTypes.map((bt) => (
+              <option key={bt} value={bt}>
+                {bt}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Telefone
+          <input
+            value={form.phone}
+            onChange={(event) => setField("phone", formatPhoneInput(event.target.value))}
+            inputMode="numeric"
+            maxLength={15}
+            placeholder="(11) 99999-9999"
+            pattern="\(\d{2}\)\s\d{4,5}-\d{4}"
+            title="Use o formato (00) 00000-0000"
+            required
+          />
+        </label>
+        <label>
+          Email
+          <input type="email" value={form.email} onChange={(event) => setField("email", event.target.value)} required />
+        </label>
+        <label className="full-width">
+          Endereco
+          <input value={form.address} onChange={(event) => setField("address", event.target.value)} required />
+        </label>
+        <label className="full-width">
+          Alergias
+          <input
+            value={form.allergies}
+            onChange={(event) => setField("allergies", event.target.value)}
+            placeholder="Informe alergias conhecidas"
+          />
+        </label>
+      </form>
+    </Modal>
+  );
+}
+
 interface PatientDetailsModalProps {
   patient: Patient;
   onClose: () => void;
@@ -274,8 +380,11 @@ export default function PatientListPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("ALL");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { data = [], isLoading, isError } = usePatients(query);
+
+  const canManagePatients = session?.role === "ADMIN" || session?.role === "RECEPTIONIST";
 
   const createPatientMutation = useMutation({
     mutationFn: createPatient,
@@ -289,11 +398,44 @@ export default function PatientListPage() {
     }
   });
 
+  const updatePatientMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdatePatientPayload }) => updatePatient(id, payload),
+    onSuccess: async () => {
+      setEditingPatient(null);
+      await queryClient.invalidateQueries({ queryKey: ["patients"] });
+      notify("Paciente atualizado com sucesso.");
+    },
+    onError: (error) => {
+      notify(extractApiErrorMessage(error, "Nao foi possivel atualizar o paciente."), "danger");
+    }
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: deactivatePatient,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["patients"] });
+      notify("Paciente desativado.");
+    },
+    onError: (error) => {
+      notify(extractApiErrorMessage(error, "Nao foi possivel desativar o paciente."), "danger");
+    }
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: reactivatePatient,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["patients"] });
+      notify("Paciente reativado.");
+    },
+    onError: (error) => {
+      notify(extractApiErrorMessage(error, "Nao foi possivel reativar o paciente."), "danger");
+    }
+  });
+
   const filteredPatients = useMemo(
     () => data.filter((patient) => (status === "ALL" ? true : patient.status === status)),
     [data, status]
   );
-  const canCreatePatient = session?.role === "ADMIN" || session?.role === "RECEPTIONIST";
 
   return (
     <div className="stack">
@@ -319,6 +461,15 @@ export default function PatientListPage() {
         />
       ) : null}
 
+      {editingPatient ? (
+        <EditPatientModal
+          patient={editingPatient}
+          onClose={() => setEditingPatient(null)}
+          onSubmit={(payload) => updatePatientMutation.mutate({ id: editingPatient.id, payload })}
+          submitting={updatePatientMutation.isPending}
+        />
+      ) : null}
+
       {selectedPatient ? (
         <PatientDetailsModal
           patient={selectedPatient}
@@ -332,10 +483,10 @@ export default function PatientListPage() {
           <button
             type="button"
             className="btn-small"
-            disabled={!canCreatePatient}
-            title={!canCreatePatient ? "Somente ADMIN/RECEPCAO podem cadastrar pacientes." : undefined}
+            disabled={!canManagePatients}
+            title={!canManagePatients ? "Somente ADMIN/RECEPCAO podem cadastrar pacientes." : undefined}
             onClick={() => {
-              if (!canCreatePatient) {
+              if (!canManagePatients) {
                 notify("Seu perfil nao possui permissao para cadastrar pacientes.", "warning");
                 return;
               }
@@ -426,6 +577,31 @@ export default function PatientListPage() {
                       >
                         Prontuario
                       </button>
+                      {canManagePatients ? (
+                        <button type="button" className="btn-outline" onClick={() => setEditingPatient(patient)}>
+                          Editar
+                        </button>
+                      ) : null}
+                      {canManagePatients && patient.status === "ACTIVE" ? (
+                        <button
+                          type="button"
+                          className="btn-outline btn-danger"
+                          disabled={deactivateMutation.isPending}
+                          onClick={() => deactivateMutation.mutate(patient.id)}
+                        >
+                          Desativar
+                        </button>
+                      ) : null}
+                      {canManagePatients && patient.status === "INACTIVE" ? (
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          disabled={reactivateMutation.isPending}
+                          onClick={() => reactivateMutation.mutate(patient.id)}
+                        >
+                          Reativar
+                        </button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

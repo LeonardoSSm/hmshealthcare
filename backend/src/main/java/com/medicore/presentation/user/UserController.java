@@ -63,4 +63,11 @@ public class UserController {
             request.active()
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deactivate(@PathVariable UUID id) {
+        userManagementService.deactivate(id);
+    }
 }

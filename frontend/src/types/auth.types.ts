@@ -4,6 +4,7 @@ export interface AuthSession {
   role: UserRole;
   name: string;
   email: string;
+  userId: string;
 }
 
 export interface LoginPayload {

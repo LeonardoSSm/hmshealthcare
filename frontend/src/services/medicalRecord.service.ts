@@ -2,6 +2,7 @@ import { api } from "./api";
 import type {
   CreateDiagnosisPayload,
   CreateMedicalRecordEventPayload,
+  CreatePrescriptionPayload,
   MedicalRecord
 } from "../types/record.types";
 
@@ -26,5 +27,13 @@ export async function addMedicalRecordEvent(
   payload: CreateMedicalRecordEventPayload
 ): Promise<MedicalRecord> {
   const response = await api.post<MedicalRecord>(`/medical-records/${medicalRecordId}/events`, payload);
+  return response.data;
+}
+
+export async function addPrescription(
+  medicalRecordId: string,
+  payload: CreatePrescriptionPayload
+): Promise<MedicalRecord> {
+  const response = await api.post<MedicalRecord>(`/medical-records/${medicalRecordId}/prescriptions`, payload);
   return response.data;
 }

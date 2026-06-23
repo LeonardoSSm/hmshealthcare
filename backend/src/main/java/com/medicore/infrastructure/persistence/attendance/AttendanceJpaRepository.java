@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -24,4 +25,7 @@ public interface AttendanceJpaRepository extends JpaRepository<AttendanceEntity,
     List<AttendanceEntity> findAllByOrderByCheckInAtDesc();
 
     Page<AttendanceEntity> findAllByOrderByCheckInAtDesc(Pageable pageable);
+
+    @Query("select a from AttendanceEntity a where a.checkInAt >= :from and a.checkInAt < :to order by a.checkInAt desc")
+    Page<AttendanceEntity> findByDateRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, Pageable pageable);
 }

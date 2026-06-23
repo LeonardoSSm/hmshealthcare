@@ -6,7 +6,8 @@ import { Modal } from "../../components/ui/Modal";
 import { useToast } from "../../contexts/ToastContext";
 import { getInitials } from "../../lib/format";
 import { extractApiErrorMessage } from "../../lib/apiError";
-import { useCreateUser, useUpdateUser, useUsers } from "../../hooks/useUsers";
+import { useCreateUser, useDeleteUser, useUpdateUser, useUsers } from "../../hooks/useUsers";
+import { useAuthStore } from "../../store/authStore";
 import type { UserRemoteResponse } from "../../services/user.service";
 
 const roleLabel: Record<UserRole, string> = {
@@ -126,9 +127,13 @@ const emptyUser: UserFormValue = {
 
 export default function UsersPage() {
   const { notify } = useToast();
+  const session = useAuthStore((state) => state.session);
   const { data: users = [], isLoading } = useUsers();
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
+
+  const isAdmin = session?.role === "ADMIN";
 
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserRemoteResponse | null>(null);
@@ -261,9 +266,27 @@ export default function UsersPage() {
                         <StatusBadge tone={user.active ? "success" : "neutral"} label={user.active ? "Ativo" : "Inativo"} />
                       </td>
                       <td>
-                        <button type="button" className="btn-outline" onClick={() => setSelectedUser(user)}>
-                          Editar
-                        </button>
+                        <div className="inline-actions">
+                          <button type="button" className="btn-outline" onClick={() => setSelectedUser(user)}>
+                            Editar
+                          </button>
+                          {isAdmin ? (
+                            <button
+                              type="button"
+                              className="btn-outline btn-danger"
+                              disabled={deleteUser.isPending}
+                              onClick={() => {
+                                if (!window.confirm(`Desativar o usuario "${user.name}"?`)) return;
+                                deleteUser.mutate(user.id, {
+                                  onSuccess: () => notify("Usuario desativado."),
+                                  onError: (error) => notify(extractApiErrorMessage(error, "Falha ao desativar usuario."), "danger")
+                                });
+                              }}
+                            >
+                              Desativar
+                            </button>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   ))

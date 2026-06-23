@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -69,6 +71,23 @@ public class AttendanceRepositoryImpl implements AttendanceRepository {
     public PagedResult<Attendance> findAllPaged(int page, int size) {
         Page<AttendanceEntity> result = attendanceJpaRepository
             .findAllByOrderByCheckInAtDesc(PageRequest.of(page, size));
+        return new PagedResult<>(
+            result.getContent().stream().map(AttendanceMapper::toDomain).toList(),
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResult<Attendance> findByDateRange(LocalDate from, LocalDate to, int page, int size) {
+        Page<AttendanceEntity> result = attendanceJpaRepository.findByDateRange(
+            from.atStartOfDay(),
+            to.plusDays(1).atStartOfDay(),
+            PageRequest.of(page, size)
+        );
         return new PagedResult<>(
             result.getContent().stream().map(AttendanceMapper::toDomain).toList(),
             result.getNumber(),

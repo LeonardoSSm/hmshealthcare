@@ -33,6 +33,7 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final RequestTraceFilter requestTraceFilter;
+    private final RateLimitingFilter rateLimitingFilter;
     private final UserDetailsService userDetailsService;
     private final String allowedOriginPatternsProperty;
     private final ObjectMapper objectMapper;
@@ -40,12 +41,14 @@ public class SecurityConfig {
     public SecurityConfig(
         JwtAuthFilter jwtAuthFilter,
         RequestTraceFilter requestTraceFilter,
+        RateLimitingFilter rateLimitingFilter,
         UserDetailsService userDetailsService,
         @Value("${app.security.cors.allowed-origin-patterns}") String allowedOriginPatternsProperty,
         ObjectMapper objectMapper
     ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.requestTraceFilter = requestTraceFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
         this.userDetailsService = userDetailsService;
         this.allowedOriginPatternsProperty = allowedOriginPatternsProperty;
         this.objectMapper = objectMapper;
@@ -62,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/panel/queue").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
@@ -86,6 +90,7 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(requestTraceFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

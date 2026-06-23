@@ -63,6 +63,14 @@ public class UserManagementService {
     }
 
     @Transactional
+    public void deactivate(UUID id) {
+        UserEntity entity = userJpaRepository.findById(id.toString())
+            .orElseThrow(() -> new DomainException("User not found"));
+        entity.setActive(false);
+        userJpaRepository.save(entity);
+    }
+
+    @Transactional
     public StaffUserResponse update(UUID id, UpdateStaffUserCommand command) {
         UserEntity entity = userJpaRepository.findById(id.toString())
             .orElseThrow(() -> new DomainException("User not found"));

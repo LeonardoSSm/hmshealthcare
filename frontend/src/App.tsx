@@ -8,33 +8,38 @@ import MedicalRecordsPage from "./pages/Records/MedicalRecordsPage";
 import AdmissionsPage from "./pages/Admissions/AdmissionsPage";
 import BedsMapPage from "./pages/Beds/BedsMapPage";
 import UsersPage from "./pages/Users/UsersPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
 import { AppShell } from "./components/layout/AppShell";
+import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/queue/panel" element={<QueuePanelPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppShell />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/queue" element={<AttendanceQueuePage />} />
-          <Route path="/patients" element={<PatientListPage />} />
-          <Route path="/records" element={<MedicalRecordsPage />} />
-          <Route path="/admissions" element={<AdmissionsPage />} />
-          <Route path="/beds" element={<BedsMapPage />} />
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/queue/panel" element={<QueuePanelPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppShell />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/queue" element={<AttendanceQueuePage />} />
+            <Route path="/patients" element={<PatientListPage />} />
+            <Route path="/records" element={<MedicalRecordsPage />} />
+            <Route path="/admissions" element={<AdmissionsPage />} />
+            <Route path="/beds" element={<BedsMapPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
-        <Route element={<AppShell />}>
-          <Route path="/users" element={<UsersPage />} />
+        <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
+          <Route element={<AppShell />}>
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/404" element={<NotFoundPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </ErrorBoundary>
   );
 }

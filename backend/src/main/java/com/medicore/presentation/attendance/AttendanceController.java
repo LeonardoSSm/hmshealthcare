@@ -19,6 +19,7 @@ import com.medicore.application.attendance.StartTriageCommand;
 import com.medicore.application.attendance.StartTriageUseCase;
 import com.medicore.domain.shared.PagedResult;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -82,9 +84,14 @@ public class AttendanceController {
     @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST')")
     public PagedResult<AttendanceResponse> list(
         @RequestParam(defaultValue = "false") boolean includeClosed,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
         @RequestParam(required = false, defaultValue = "0") int page,
         @RequestParam(required = false, defaultValue = "20") int size
     ) {
+        if (from != null && to != null) {
+            return listAttendancesUseCase.executeByDateRange(from, to, page, size);
+        }
         return includeClosed
             ? listAttendancesUseCase.executePaged(page, size)
             : listAttendancesUseCase.executeOpen();

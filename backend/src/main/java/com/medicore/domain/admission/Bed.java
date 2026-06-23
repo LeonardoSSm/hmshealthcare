@@ -7,10 +7,10 @@ import java.util.UUID;
 
 public class Bed {
     private final UUID id;
-    private final String number;
-    private final int floor;
-    private final String ward;
-    private final BedType type;
+    private String number;
+    private int floor;
+    private String ward;
+    private BedType type;
 
     private BedStatus status;
 
@@ -27,6 +27,26 @@ public class Bed {
         this.ward = ward.trim();
         this.type = Objects.requireNonNull(type, "type cannot be null");
         this.status = Objects.requireNonNull(status, "status cannot be null");
+    }
+
+    public void updateDetails(String number, int floor, String ward, BedType type) {
+        if (number == null || number.isBlank()) {
+            throw new DomainException("Bed number cannot be blank");
+        }
+        if (ward == null || ward.isBlank()) {
+            throw new DomainException("Ward cannot be blank");
+        }
+        this.number = number.trim();
+        this.floor = floor;
+        this.ward = ward.trim();
+        this.type = Objects.requireNonNull(type, "type cannot be null");
+    }
+
+    public void changeStatus(BedStatus newStatus) {
+        if (newStatus == BedStatus.OCCUPIED) {
+            throw new DomainException("Cannot manually set bed to OCCUPIED — use admission flow");
+        }
+        this.status = Objects.requireNonNull(newStatus, "status cannot be null");
     }
 
     public void occupy() {
