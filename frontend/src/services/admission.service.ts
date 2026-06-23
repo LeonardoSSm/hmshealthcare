@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { PagedResult } from "../types/paged.types";
 
 export interface AdmissionRemoteResponse {
   id: string;
@@ -19,8 +20,8 @@ export interface AdmitRemotePayload {
 }
 
 export async function listAdmissions(): Promise<AdmissionRemoteResponse[]> {
-  const response = await api.get<AdmissionRemoteResponse[]>("/admissions");
-  return response.data;
+  const response = await api.get<PagedResult<AdmissionRemoteResponse>>("/admissions", { params: { size: 100 } });
+  return response.data.content;
 }
 
 export async function listAdmissionsByPatient(patientId: string): Promise<AdmissionRemoteResponse[]> {

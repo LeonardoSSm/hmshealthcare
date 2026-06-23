@@ -1,5 +1,6 @@
 import { api } from "./api";
 import type { Attendance, QueuePanelItem, RiskLevel } from "../types/attendance.types";
+import type { PagedResult } from "../types/paged.types";
 
 interface BaseActionPayload {
   requestedBy?: string;
@@ -40,8 +41,10 @@ export interface CancelAttendancePayload extends BaseActionPayload {
 }
 
 export async function listAttendances(includeClosed = false): Promise<Attendance[]> {
-  const response = await api.get<Attendance[]>("/attendances", { params: { includeClosed } });
-  return response.data;
+  const response = await api.get<PagedResult<Attendance>>("/attendances", {
+    params: { includeClosed, size: includeClosed ? 100 : 500 }
+  });
+  return response.data.content;
 }
 
 export async function checkInAttendance(payload: CheckInPayload): Promise<Attendance> {

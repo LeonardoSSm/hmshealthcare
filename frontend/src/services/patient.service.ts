@@ -1,5 +1,6 @@
 import { api } from "./api";
 import type { CreatePatientPayload, Patient } from "../types/patient.types";
+import type { PagedResult } from "../types/paged.types";
 
 const uiToApiBloodType: Record<string, string> = {
   "A+": "A_POS",
@@ -31,8 +32,8 @@ function toUiPatient(patient: Patient): Patient {
 }
 
 export async function listPatients(query: string): Promise<Patient[]> {
-  const response = await api.get<Patient[]>("/patients", { params: { query } });
-  return response.data.map(toUiPatient);
+  const response = await api.get<PagedResult<Patient>>("/patients", { params: { query, size: 100 } });
+  return response.data.content.map(toUiPatient);
 }
 
 export async function getPatientById(id: string): Promise<Patient> {
