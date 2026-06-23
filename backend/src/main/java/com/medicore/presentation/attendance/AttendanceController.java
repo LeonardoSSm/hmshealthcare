@@ -17,6 +17,7 @@ import com.medicore.application.attendance.StartConsultationCommand;
 import com.medicore.application.attendance.StartConsultationUseCase;
 import com.medicore.application.attendance.StartTriageCommand;
 import com.medicore.application.attendance.StartTriageUseCase;
+import com.medicore.domain.shared.PagedResult;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -80,8 +80,14 @@ public class AttendanceController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST')")
-    public List<AttendanceResponse> list(@RequestParam(defaultValue = "false") boolean includeClosed) {
-        return listAttendancesUseCase.execute(includeClosed);
+    public PagedResult<AttendanceResponse> list(
+        @RequestParam(defaultValue = "false") boolean includeClosed,
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "20") int size
+    ) {
+        return includeClosed
+            ? listAttendancesUseCase.executePaged(page, size)
+            : listAttendancesUseCase.executeOpen();
     }
 
     @GetMapping("/{attendanceId}")

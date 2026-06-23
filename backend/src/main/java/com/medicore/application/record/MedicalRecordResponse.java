@@ -1,6 +1,5 @@
 package com.medicore.application.record;
 
-import com.medicore.domain.patient.PatientId;
 import com.medicore.domain.record.MedicalRecord;
 
 import java.util.List;
@@ -10,7 +9,8 @@ public record MedicalRecordResponse(
     UUID id,
     UUID patientId,
     String observations,
-    List<DiagnosisRequest> diagnoses,
+    List<DiagnosisResponse> diagnoses,
+    List<PrescriptionResponse> prescriptions,
     List<MedicalRecordEventResponse> events
 ) {
     public static MedicalRecordResponse from(MedicalRecord medicalRecord) {
@@ -18,12 +18,9 @@ public record MedicalRecordResponse(
             medicalRecord.getId(),
             medicalRecord.getPatientId().value(),
             medicalRecord.getObservations(),
-            medicalRecord.getDiagnoses().stream()
-                .map(d -> new DiagnosisRequest(d.doctorId(), d.icd10Code(), d.description(), d.notes(), d.diagnosedAt()))
-                .toList(),
-            medicalRecord.getEvents().stream()
-                .map(MedicalRecordEventResponse::from)
-                .toList()
+            medicalRecord.getDiagnoses().stream().map(DiagnosisResponse::from).toList(),
+            medicalRecord.getPrescriptions().stream().map(PrescriptionResponse::from).toList(),
+            medicalRecord.getEvents().stream().map(MedicalRecordEventResponse::from).toList()
         );
     }
 }

@@ -2,6 +2,7 @@ package com.medicore.application.attendance;
 
 import com.medicore.domain.attendance.Attendance;
 import com.medicore.domain.attendance.AttendanceRepository;
+import com.medicore.domain.shared.PagedResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +22,22 @@ public class ListAttendancesUseCase {
     }
 
     @Transactional(readOnly = true)
-    public List<AttendanceResponse> execute(boolean includeClosed) {
-        List<Attendance> attendances = includeClosed
-            ? attendanceRepository.findAll()
-            : attendanceRepository.findOpenAttendances();
-        return attendances.stream().map(responseMapper::toResponse).toList();
+    public PagedResult<AttendanceResponse> executeOpen() {
+        List<AttendanceResponse> items = attendanceRepository.findOpenAttendances().stream()
+            .map(responseMapper::toResponse)
+            .toList();
+        return new PagedResult<>(items, 0, items.size(), items.size(), 1);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResult<AttendanceResponse> executePaged(int page, int size) {
+        PagedResult<Attendance> result = attendanceRepository.findAllPaged(page, size);
+        return new PagedResult<>(
+            result.content().stream().map(responseMapper::toResponse).toList(),
+            result.page(),
+            result.size(),
+            result.totalElements(),
+            result.totalPages()
+        );
     }
 }

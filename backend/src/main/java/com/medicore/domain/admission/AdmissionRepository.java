@@ -1,6 +1,7 @@
 package com.medicore.domain.admission;
 
 import com.medicore.domain.patient.PatientId;
+import com.medicore.domain.shared.PagedResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,4 +13,5 @@ public interface AdmissionRepository {
     List<Admission> findByPatientId(PatientId patientId);
     List<Admission> findActiveAdmissions();
     List<Admission> findAll();
+    PagedResult<Admission> findAllPaged(int page, int size);
 }

@@ -1,10 +1,9 @@
 package com.medicore.application.admission;
 
 import com.medicore.domain.admission.AdmissionRepository;
+import com.medicore.domain.shared.PagedResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class ListAdmissionsUseCase {
@@ -15,9 +14,14 @@ public class ListAdmissionsUseCase {
     }
 
     @Transactional(readOnly = true)
-    public List<AdmissionResponse> execute() {
-        return admissionRepository.findAll().stream()
-            .map(AdmissionResponse::from)
-            .toList();
+    public PagedResult<AdmissionResponse> execute(int page, int size) {
+        PagedResult<com.medicore.domain.admission.Admission> result = admissionRepository.findAllPaged(page, size);
+        return new PagedResult<>(
+            result.content().stream().map(AdmissionResponse::from).toList(),
+            result.page(),
+            result.size(),
+            result.totalElements(),
+            result.totalPages()
+        );
     }
 }

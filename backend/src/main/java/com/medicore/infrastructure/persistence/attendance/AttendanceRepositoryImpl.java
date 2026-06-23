@@ -4,6 +4,9 @@ import com.medicore.domain.attendance.Attendance;
 import com.medicore.domain.attendance.AttendanceRepository;
 import com.medicore.domain.attendance.AttendanceStatus;
 import com.medicore.domain.patient.PatientId;
+import com.medicore.domain.shared.PagedResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +62,20 @@ public class AttendanceRepositoryImpl implements AttendanceRepository {
         return attendanceJpaRepository.findAllByOrderByCheckInAtDesc().stream()
             .map(AttendanceMapper::toDomain)
             .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResult<Attendance> findAllPaged(int page, int size) {
+        Page<AttendanceEntity> result = attendanceJpaRepository
+            .findAllByOrderByCheckInAtDesc(PageRequest.of(page, size));
+        return new PagedResult<>(
+            result.getContent().stream().map(AttendanceMapper::toDomain).toList(),
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages()
+        );
     }
 
     @Override

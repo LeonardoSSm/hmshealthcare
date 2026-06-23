@@ -1,6 +1,7 @@
 package com.medicore.presentation.admission;
 
 import com.medicore.application.admission.*;
+import com.medicore.domain.shared.PagedResult;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,10 @@ public class AdmissionController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST')")
-    public List<AdmissionResponse> list() {
-        return listAdmissionsUseCase.execute();
+    public PagedResult<AdmissionResponse> list(
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "20") int size
+    ) {
+        return listAdmissionsUseCase.execute(page, size);
     }
 }

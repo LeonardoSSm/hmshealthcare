@@ -4,6 +4,9 @@ import com.medicore.domain.admission.Admission;
 import com.medicore.domain.admission.AdmissionRepository;
 import com.medicore.domain.admission.AdmissionStatus;
 import com.medicore.domain.patient.PatientId;
+import com.medicore.domain.shared.PagedResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -42,5 +45,18 @@ public class AdmissionRepositoryImpl implements AdmissionRepository {
     @Override
     public List<Admission> findAll() {
         return admissionJpaRepository.findAllByOrderByAdmissionDateDesc().stream().map(AdmissionMapper::toDomain).toList();
+    }
+
+    @Override
+    public PagedResult<Admission> findAllPaged(int page, int size) {
+        Page<AdmissionEntity> result = admissionJpaRepository
+            .findAllByOrderByAdmissionDateDesc(PageRequest.of(page, size));
+        return new PagedResult<>(
+            result.getContent().stream().map(AdmissionMapper::toDomain).toList(),
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages()
+        );
     }
 }

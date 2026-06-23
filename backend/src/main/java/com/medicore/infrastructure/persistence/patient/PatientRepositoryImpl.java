@@ -4,6 +4,10 @@ import com.medicore.domain.patient.Patient;
 import com.medicore.domain.patient.PatientId;
 import com.medicore.domain.patient.PatientRepository;
 import com.medicore.domain.shared.CPF;
+import com.medicore.domain.shared.PagedResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -40,5 +44,20 @@ public class PatientRepositoryImpl implements PatientRepository {
             .stream()
             .map(PatientMapper::toDomain)
             .toList();
+    }
+
+    @Override
+    public PagedResult<Patient> searchPaged(String query, int page, int size) {
+        String safe = query == null ? "" : query.trim();
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<PatientEntity> result = patientJpaRepository
+            .findByNameContainingIgnoreCaseOrCpfContaining(safe, safe, pageable);
+        return new PagedResult<>(
+            result.getContent().stream().map(PatientMapper::toDomain).toList(),
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages()
+        );
     }
 }

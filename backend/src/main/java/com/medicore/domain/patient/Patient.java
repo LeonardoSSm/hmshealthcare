@@ -95,6 +95,17 @@ public class Patient {
         this.address = emptyIfNull(address);
     }
 
+    public void update(String name, LocalDate birthDate, BloodType bloodType, String allergies,
+                       String phone, String email, String address) {
+        this.name = validateName(name);
+        this.birthDate = Objects.requireNonNull(birthDate, "birthDate cannot be null");
+        this.bloodType = Objects.requireNonNull(bloodType, "bloodType cannot be null");
+        this.allergies = emptyIfNull(allergies);
+        this.phone = emptyIfNull(phone);
+        this.email = emptyIfNull(email);
+        this.address = emptyIfNull(address);
+    }
+
     public void deactivate() {
         this.status = PatientStatus.INACTIVE;
     }
