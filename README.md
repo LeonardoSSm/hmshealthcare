@@ -21,6 +21,32 @@ Monorepo com backend `Spring Boot 3 / Java 21` e frontend `React + Vite + TypeSc
 - Maven 3.9+
 - Node 20+
 - MySQL 8+
+- Docker Desktop (para Open WebUI local)
+
+## Open WebUI + Ollama (local)
+
+Com o Ollama rodando na maquina host (`http://localhost:11434`), suba a interface web:
+
+```bash
+docker compose -f docker-compose.open-webui.yml up -d
+```
+
+Acesse em `http://localhost:3001`.
+
+Comandos uteis:
+
+```bash
+docker compose -f docker-compose.open-webui.yml logs -f
+docker compose -f docker-compose.open-webui.yml down
+```
+
+Se quiser mudar porta/endpoint do Ollama:
+
+```bash
+$env:OPEN_WEBUI_PORT="3002"
+$env:OLLAMA_BASE_URL="http://host.docker.internal:11434"
+docker compose -f docker-compose.open-webui.yml up -d
+```
 
 ## Rodar em desenvolvimento
 
